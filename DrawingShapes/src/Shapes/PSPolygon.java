@@ -1,20 +1,25 @@
-package sample;
+package Shapes;
 
+import Shapes.PSShape;
 import javafx.scene.canvas.GraphicsContext;
 
-public class Polygon extends Shape {
+public class PSPolygon extends PSShape {
 
     double[] xPoints, yPoints;
     int nPoints;
 
-    public Polygon() {
+//    public PSPolygon(double[] points) {
+//        super(points);
+//    }
+
+    public PSPolygon() {
         super(0, 0, 0, 0, "Polygon");
         this.xPoints = null;
         this.yPoints = null;
         this.nPoints = 0;
     }
 
-    public Polygon(double[] xPoints, double[] yPoints, int nPoints) {
+    public PSPolygon(double[] xPoints, double[] yPoints, int nPoints) {
         this.xPoints = xPoints;
         this.yPoints = yPoints;
         this.nPoints = nPoints;

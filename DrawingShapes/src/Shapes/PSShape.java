@@ -1,16 +1,28 @@
-package sample;
+package Shapes;
 
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.shape.Polygon;
+import javafx.scene.shape.Shape;
 
-public abstract class Shape {
+public abstract class PSShape {
     public int x1, y1, x2, y2;
     public String name;
 
-    public Shape() {
+    private Shape shape = null;
+
+//    public PSShape(double[] points) {
+//        shape = new Polygon(points);
+//    }
+//
+//    public PSShape(Shape getShape) {
+//        shape = getShape;
+//    }
+
+    public PSShape() {
         this(0, 0, 1, 1, "Polygon");
     }
 
-    public Shape(int x1, int y1, int x2, int y2, String name) {
+    public PSShape(int x1, int y1, int x2, int y2, String name) {
         this.x1 = x1;
         this.y1 = y1;
         this.x2 = x2;
@@ -57,6 +69,10 @@ public abstract class Shape {
 
     public String getName() {
         return name;
+    }
+
+    public Shape getShape() {
+        return shape;
     }
 
     public abstract void draw(GraphicsContext g);
