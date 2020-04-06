@@ -1,9 +1,14 @@
 package sample;
 
+import Shapes.PSShape;
 import javafx.application.Application;
+import javafx.collections.FXCollections;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.*;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuItem;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
@@ -13,7 +18,27 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.input.MouseEvent;
 
+import java.io.*;
+import java.nio.file.Path;
+import java.nio.file.FileSystems;
+import java.util.ArrayList;
+
+
 public class Main extends Application {
+
+    private String helpForChoosingFirstPointText = "    Click for the 1 point of your figure";
+    private String helpForChoosingSecondPointText = "   Click for the 2 point of your figure";
+    private String helpForDrawingPolygon = "  Click for choosing points then right button click to draw";
+
+    private sceneStates sceneState = sceneStates.WAITING_FOR_CHOOSING_FIGURE;
+    private PSShape choosedShape = null;
+
+    private enum sceneStates {
+        WAITING_FOR_CHOOSING_FIGURE,
+        WAITING_FOR_FIRST_POINT,
+        WAITING_FOR_SECOND_POINT,
+        WAITING_FOR_N_POINTS
+    }
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -34,33 +59,50 @@ public class Main extends Application {
         return menuBar;
     }
 
-    private MenuBar createMenuOfShapes() {
-        Menu menu = new Menu("Shapes");
+    private ComboBox createMenuOfShapes() {
 
-        RadioMenuItem choice1Item = new RadioMenuItem("Circle");
-        RadioMenuItem choice2Item = new RadioMenuItem("Rectangle");
-        RadioMenuItem choice3Item = new RadioMenuItem("Polygon");
+        ArrayList<String> kek = new ArrayList<String>();
+        Path path = FileSystems.getDefault().getPath("src/Shapes").toAbsolutePath();
+        String s = path.toAbsolutePath().toString();
 
-        ToggleGroup toggleGroup = new ToggleGroup();
-        toggleGroup.getToggles().add(choice1Item);
-        toggleGroup.getToggles().add(choice2Item);
-        toggleGroup.getToggles().add(choice3Item);
+        File myFolder = new File(s);
+        for (File i: myFolder.listFiles()) {
+            String string = i.getName();
+            string = string.substring(0, string.length() - 5);
+            kek.add(string);
+        }
 
-        menu.getItems().add(choice1Item);
-        menu.getItems().add(choice2Item);
-        menu.getItems().add(choice3Item);
+        ComboBox cb = new ComboBox(FXCollections.observableArrayList(kek));
 
-        MenuBar menuBar = new MenuBar();
-        menuBar.getMenus().add(menu);
-        return menuBar;
+        return cb;
     }
 
     private void initUI(Stage stage) {
 
         var root = new Pane();
-
-        FlowPane panel = new FlowPane(createMenuOfApp(), createMenuOfShapes());
         PSFiguresList list = new PSFiguresList();
+        String helpForChoosingShapeText = "    <- Choose a figure";
+        Label hint = new Label(helpForChoosingShapeText);
+
+        MenuBar info = createMenuOfApp();
+        ComboBox shapesMenu = createMenuOfShapes();
+        EventHandler<ActionEvent> shapeFromComboBox = new EventHandler<ActionEvent>() {
+            public void handle(ActionEvent e) {
+                System.out.print(shapesMenu.getValue() + " selected");
+                try {
+                    Object nameOfClass = Class.forName("Shapes.PSLine").getConstructor().newInstance();
+                    choosedShape = (PSShape) nameOfClass;
+                    System.out.print(choosedShape);
+                } catch (Exception exp) {
+                    System.out.print(exp);
+                };
+
+                hint.setText(helpForChoosingFirstPointText);
+            }
+        };
+        shapesMenu.setOnAction(shapeFromComboBox);
+
+        FlowPane panel = new FlowPane(info, shapesMenu, hint);
 
         var canvas = new Canvas(300, 300);
         var gc = canvas.getGraphicsContext2D();
@@ -73,31 +115,33 @@ public class Main extends Application {
         VBox.setLayoutX(0.0);
 
         Scene scene = new Scene(VBox, 640, 480);
-        scene.setOnMouseClicked(getCoordinates);
+//        scene.setOnMouseClicked(getCoordinates);
+        scene.addEventHandler(MouseEvent.MOUSE_CLICKED, mouseClickHandler);
         stage.setTitle("Lines");
         stage.setScene(scene);
         stage.show();
     }
 
-    private EventHandler<ActionEvent> event = new EventHandler<ActionEvent>() {
-        public void handle(ActionEvent e) {
-//            PSShape figureShape = null;
-//            gc.clearRect(0, 0, 300, 300);
-//            if (i[0] == list.getSize) {
-//                i[0] = 0;
-//            }
-//            figureShape = list.getShape(i[0]);
-//            figureShape.draw(gc);
-//            label.setText((figureShape.getName() == "Polygon") ? (((PSPolygon) figureShape).getParams()) : (figureShape.getAllParams()));
-//            ++i[0];
-        }
-    };
-
-    private EventHandler<MouseEvent> getCoordinates = new EventHandler<MouseEvent>() {
+    EventHandler<MouseEvent> mouseClickHandler = new EventHandler<MouseEvent>() {
         @Override
-        public void handle(MouseEvent event) {
-            System.out.println("x = " + event.getSceneX());
-            System.out.println("y = " + event.getSceneY());
+        public void handle(MouseEvent mouseEvent) {
+            if (mouseEvent.getButton() == MouseButton.PRIMARY) {
+                System.out.println(mouseEvent.getEventType() + "\n"
+                        + "X : Y - " + mouseEvent.getX() + " : " + mouseEvent.getY() + "\n"
+                        + "SceneX : SceneY - " + mouseEvent.getSceneX() + " : " + mouseEvent.getSceneY() + "\n"
+                        + "ScreenX : ScreenY - " + mouseEvent.getScreenX() + " : " + mouseEvent.getScreenY());
+                switch (sceneState) {
+                    case WAITING_FOR_CHOOSING_FIGURE:
+                        break;
+                    case WAITING_FOR_FIRST_POINT:
+                        break;
+                    case WAITING_FOR_SECOND_POINT:
+                        break;
+                    case WAITING_FOR_N_POINTS:
+                        break;
+                }
+            } else if (mouseEvent.getButton() == MouseButton.SECONDARY)
+                System.out.print(mouseEvent.getButton());
         }
     };
 
