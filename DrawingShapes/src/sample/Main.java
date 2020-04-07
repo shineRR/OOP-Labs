@@ -4,6 +4,7 @@ import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.*;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
@@ -22,6 +23,7 @@ import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.FileSystems;
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class Main extends Application {
 
@@ -34,9 +36,9 @@ public class Main extends Application {
     PSFiguresList list = new PSFiguresList();
 
     private sceneStates sceneState = sceneStates.WAITING_FOR_CHOOSING_FIGURE;
-    private PSShape choosedShape = null;
-
     private Canvas canvas = new Canvas(640, 480);
+    private PSShape chooseShape = null;
+
 
     private enum sceneStates {
         WAITING_FOR_CHOOSING_FIGURE,
@@ -52,25 +54,22 @@ public class Main extends Application {
 
     private MenuBar createMenuOfApp() {
         Menu menu = new Menu("DrawingShapes");
-
-        MenuItem menuItem1 = new MenuItem("Open");
-        MenuItem menuItem2 = new MenuItem("Save");
+        var menuItem1 = new MenuItem("Open");
+        var menuItem2 = new MenuItem("Save");
         menu.getItems().add(menuItem1);
         menu.getItems().add(menuItem2);
-
-        MenuBar menuBar = new MenuBar();
+        var menuBar = new MenuBar();
         menuBar.getMenus().add(menu);
         return menuBar;
     }
 
     private ComboBox createMenuOfShapes() {
-
         ArrayList<String> nameOfShapes = new ArrayList<String>();
         Path path = FileSystems.getDefault().getPath("src/Shapes").toAbsolutePath();
         String s = path.toAbsolutePath().toString();
 
         File myFolder = new File(s);
-        for (File file: myFolder.listFiles()) {
+        for (File file: Objects.requireNonNull(myFolder.listFiles())) {
             String string = file.getName();
             string = string.substring(0, string.lastIndexOf("."));
             nameOfShapes.add(string);
@@ -82,35 +81,37 @@ public class Main extends Application {
     }
 
     private void initUI(Stage stage) {
-
         var root = new Pane();
-
+        GraphicsContext gc = canvas.getGraphicsContext2D();
+        gc.setFill(Color.RED);
+        Button clearScreen = new Button("Clear");
+        clearScreen.setOnAction(new EventHandler<ActionEvent>() {
+            @Override public void handle(ActionEvent e) {
+                gc.clearRect(0,0 , canvas.getWidth(), canvas.getHeight());
+            }
+        });
         MenuBar info = createMenuOfApp();
-        ComboBox shapesMenu = createMenuOfShapes();
+        var shapesMenu = createMenuOfShapes();
         EventHandler<ActionEvent> shapeFromComboBox = new EventHandler<ActionEvent>() {
             public void handle(ActionEvent e) {
                 String selectedShape = "Shapes." + shapesMenu.getValue().toString();
                 try {
                     Object nameOfClass = Class.forName(selectedShape).getConstructor().newInstance();
-                    choosedShape = (PSShape) nameOfClass;
-                    sceneState = choosedShape.quantityOfCoordinates() > 2 ? sceneStates.WAITING_FOR_N_POINTS :
+                    chooseShape = (PSShape) nameOfClass;
+                    sceneState = chooseShape.quantityOfCoordinates() > 2 ? sceneStates.WAITING_FOR_N_POINTS :
                                                                                     sceneStates.WAITING_FOR_FIRST_POINT;
                     hint.setText(sceneState == sceneStates.WAITING_FOR_N_POINTS ? helpForDrawingPolygon :
                                                                                     helpForChoosingFirstPointText);
-                    System.out.print(choosedShape);
-                } catch (Exception exp) {
-                    System.out.print(exp);
+                } catch (Exception ex) {
+                    System.out.print(ex.getClass().getCanonicalName());
                 };
             }
         };
         shapesMenu.setOnAction(shapeFromComboBox);
 
-        FlowPane panel = new FlowPane(info, shapesMenu, hint);
+        FlowPane panel = new FlowPane(info, shapesMenu, clearScreen, hint);
 
-        canvas.setOnMouseClicked(mouseEvent -> this.mouseClicked(mouseEvent));
-        var gc = canvas.getGraphicsContext2D();
-        gc.setFill(Color.RED);
-
+        canvas.setOnMouseClicked(this::mouseClicked);
         root.getChildren().add(canvas);
 
         var VBox = new VBox(panel, canvas);
@@ -135,33 +136,31 @@ public class Main extends Application {
                 case WAITING_FOR_CHOOSING_FIGURE:
                     break;
                 case WAITING_FOR_FIRST_POINT:
-                    choosedShape.addPoints(point);
+                    chooseShape.addPoints(point);
                     sceneState = sceneStates.WAITING_FOR_SECOND_POINT;
                     hint.setText(helpForChoosingSecondPointText);
                     break;
                 case WAITING_FOR_SECOND_POINT:
-                    choosedShape.addPoints(point);
-                        list.addShape(choosedShape);
-                        choosedShape.draw(canvas.getGraphicsContext2D());
+                    chooseShape.addPoints(point);
+                        list.addShape(chooseShape);
+                        chooseShape.draw(canvas.getGraphicsContext2D());
                         sceneState = sceneStates.WAITING_FOR_FIRST_POINT;
                         hint.setText(helpForChoosingFirstPointText);
                     break;
                 case WAITING_FOR_N_POINTS:
-//                    choosedShape.addPoints(point);
-////                    count++;
-////                    if (choosedShape.quantityOfCoordinates() ==  count) {
-////                        list.addShape(choosedShape);
-////                        choosedShape.draw(canvas.getGraphicsContext2D());
-////                        count = 0;
-////                    }
+                    chooseShape.addPoints(point);
+                    hint.setText(helpForDrawingPolygon);
                     break;
             }
-        } else if (e.getButton() == MouseButton.SECONDARY)
-            System.out.print(e.getButton());
-//            if (count >=  5) {
-//                list.addShape(choosedShape);
-//                choosedShape.draw(canvas.getGraphicsContext2D());
-//            }
+        } else if (e.getButton() == MouseButton.SECONDARY) {
+            if (chooseShape.leftPoints() == 0) {
+                list.addShape(chooseShape);
+                chooseShape.draw(canvas.getGraphicsContext2D());
+                hint.setText(helpForDrawingPolygon);
+            } else {
+                hint.setText("Not enough points. " + chooseShape.leftPoints() + " more :)");
+            }
+        }
     }
 
     public static void main(String[] args) {

@@ -8,44 +8,56 @@ import java.util.ArrayList;
 
 public class PSPolygon extends PSShape {
 
-    public int quantityOfCoordinates = 5;
+    public int minimumQuantityOfCoordinates = 3;
     private int currentCoordinate = 0;
-    private Point[] points = new Point[quantityOfCoordinates];
+    private ArrayList<Point> pointList = new ArrayList<Point>();
 
     double[] xPoints, yPoints;
     int nPoints;
 
-    private double[] getXPoints(Point[] points) {
-        double[] XPoints = new double[points.length];
-        for (int i = 0; i < points.length; i++) {
-            XPoints[i] = points[i].x;
+    private double[] getXPoints() {
+        double[] XPOINTS = new double[pointList.size()];
+        int i = 0;
+        for (Point point : pointList) {
+            XPOINTS[i] = point.x;
+            i++;
         }
-        return XPoints;
+        return XPOINTS;
     }
 
-    private double[] getYPoints(Point[] points) {
-        double[] YPoints = new double[points.length];
-        for (int i = 0; i < points.length; i++) {
-            YPoints[i] = points[i].x;
+    private double[] getYPoints() {
+        double[] YPOINTS = new double[pointList.size()];
+        int i = 0;
+        for (Point point : pointList) {
+            YPOINTS[i] = point.y;
+            i++;
         }
-        return YPoints;
+        return YPOINTS;
+    }
+
+    @Override
+    public int leftPoints() {
+        return Math.max(minimumQuantityOfCoordinates - currentCoordinate, 0);
     }
 
     @Override
     public int quantityOfCoordinates() {
-        return quantityOfCoordinates;
+        return minimumQuantityOfCoordinates;
     }
 
     @Override
     public void addPoints(Point point) {
-        System.out.println(currentCoordinate + " + 1");
-        points[currentCoordinate] = point;
+        pointList.add(point);
         currentCoordinate++;
     }
 
     @Override
     public void draw(GraphicsContext g) {
         currentCoordinate = 0;
-        g.fillPolygon(getXPoints(points), getYPoints(points), points.length);
+        xPoints = getXPoints();
+        yPoints = getYPoints();
+        nPoints = pointList.size();
+        g.fillPolygon(xPoints, yPoints, nPoints);
+        pointList.clear();
     }
 }

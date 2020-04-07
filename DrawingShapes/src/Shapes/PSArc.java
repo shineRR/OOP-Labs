@@ -6,12 +6,20 @@ import sample.PSShape;
 import sample.Point;
 
 public class PSArc extends PSShape {
-    int startAngle, arcAngle;
+    double startAngle = 90, arcAngle;
 
     public int quantityOfCoordinates = 2;
-    private int currentCoordiante = 0;
+    private int currentCoordinate = 0;
     private Point[] points = new Point[quantityOfCoordinates];
 
+    private double getArcAngle() {
+        return (points[1].x - points[0].x < 0 ? 180 : -180);
+    }
+
+    @Override
+    public int leftPoints() {
+        return quantityOfCoordinates - currentCoordinate;
+    }
 
     @Override
     public int quantityOfCoordinates() {
@@ -20,14 +28,16 @@ public class PSArc extends PSShape {
 
     @Override
     public void addPoints(Point point) {
-        points[currentCoordiante] = point;
-        currentCoordiante++;
+        points[currentCoordinate] = point;
+        currentCoordinate++;
     }
 
     @Override
     public void draw(GraphicsContext g) {
-        currentCoordiante = 0;
-        g.fillArc(points[0].x, points[0].y, Math.abs(points[1].x - points[0].x), Math.abs(points[1].y - points[0].y),
-                                                                                0, 90, ArcType.OPEN);
+        currentCoordinate = 0;
+        arcAngle = getArcAngle();
+        points = validateValuesForTwoCoordinates(points);
+        g.fillArc(points[0].x, points[0].y, (points[1].x - points[0].x), (points[1].y - points[0].y),
+                startAngle, arcAngle, ArcType.ROUND);
     }
 }

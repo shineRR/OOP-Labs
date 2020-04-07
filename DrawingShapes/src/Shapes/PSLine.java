@@ -13,6 +13,11 @@ public class PSLine extends PSShape {
     private Point[] points = new Point[quantityOfCoordinates];
 
     @Override
+    public int leftPoints() {
+        return quantityOfCoordinates - currentCoordinate;
+    }
+
+    @Override
     public int quantityOfCoordinates() {
         return quantityOfCoordinates;
     }

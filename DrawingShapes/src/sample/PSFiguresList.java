@@ -14,6 +14,13 @@ public class PSFiguresList {
         ++getSize;
     }
 
+    public void printList() {
+        System.out.print("List: \n");
+        for (PSShape psShape: PSShapes) {
+            System.out.print(psShape.getClass());
+        }
+    }
+
     public PSShape getShape(int i){
         return PSShapes.get(i);
     }

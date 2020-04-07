@@ -15,21 +15,9 @@ public class PSOval extends PSShape {
         return (secondPoint - firstPoint < 0 ? (-1) * (secondPoint - firstPoint) : secondPoint - firstPoint);
     }
 
-    private void validateValues() {
-        double dstX2X1 = points[1].x - points[0].x;;
-        double dstY2Y1 = points[1].y - points[0].y;;
-
-        if (dstX2X1 < 0) {
-            double temp = points[0].x;
-            points[0].x = points[1].x;
-            points[1].x = temp;
-        }
-
-        if (dstY2Y1 < 0) {
-            double temp = points[0].y;
-            points[0].y = points[1].y;
-            points[1].y = temp;
-        }
+    @Override
+    public int leftPoints() {
+        return quantityOfCoordinates - currentCoordinate;
     }
 
     @Override
@@ -46,7 +34,7 @@ public class PSOval extends PSShape {
     @Override
     public void draw(GraphicsContext g) {
         currentCoordinate = 0;
-        validateValues();
+        points = validateValuesForTwoCoordinates(points);
         // x, y, width, height
         g.fillOval(points[0].x, points[0].y, Math.abs(points[1].x - points[0].x), Math.abs(points[1].y - points[0].y));
     }
