@@ -16,8 +16,6 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.scene.input.MouseEvent;
 import java.io.*;
 import java.nio.file.Path;
@@ -30,7 +28,7 @@ public class Main extends Application {
     private String helpForChoosingShapeText = "    <- Choose a figure";
     private String helpForChoosingFirstPointText = "    Click for the 1 point of your figure";
     private String helpForChoosingSecondPointText = "   Click for the 2 point of your figure";
-    private String helpForDrawingPolygon = "  Click for choosing points then right button click to draw";
+    private String helpForDrawingManyAngleFigureText = "  Click for choosing points then right button click to draw";
     private Label hint = new Label(helpForChoosingShapeText);
 
     PSFiguresList list = new PSFiguresList();
@@ -38,7 +36,6 @@ public class Main extends Application {
     private sceneStates sceneState = sceneStates.WAITING_FOR_CHOOSING_FIGURE;
     private Canvas canvas = new Canvas(640, 480);
     private PSShape chooseShape = null;
-
 
     private enum sceneStates {
         WAITING_FOR_CHOOSING_FIGURE,
@@ -80,34 +77,34 @@ public class Main extends Application {
         return cb;
     }
 
+    private void clearCanvas(GraphicsContext gc) {
+        gc.clearRect(0,0 , canvas.getWidth(), canvas.getHeight());
+    }
+
+    private void shapeSelection(ComboBox shapesMenu) {
+        String selectedShape = "Shapes." + shapesMenu.getValue().toString();
+        try {
+            Object nameOfClass = Class.forName(selectedShape).getConstructor().newInstance();
+            chooseShape = (PSShape) nameOfClass;
+            sceneState = chooseShape.quantityOfCoordinates() > 2 ? sceneStates.WAITING_FOR_N_POINTS :
+                                                                            sceneStates.WAITING_FOR_FIRST_POINT;
+            hint.setText(sceneState == sceneStates.WAITING_FOR_N_POINTS ? helpForDrawingManyAngleFigureText :
+                                                                                    helpForChoosingFirstPointText);
+        } catch (Exception ex) {
+            System.out.print(ex.getClass().getCanonicalName());
+        };
+    }
+
     private void initUI(Stage stage) {
         var root = new Pane();
         GraphicsContext gc = canvas.getGraphicsContext2D();
         gc.setFill(Color.RED);
         Button clearScreen = new Button("Clear");
-        clearScreen.setOnAction(new EventHandler<ActionEvent>() {
-            @Override public void handle(ActionEvent e) {
-                gc.clearRect(0,0 , canvas.getWidth(), canvas.getHeight());
-            }
-        });
+        clearScreen.setOnAction(event -> clearCanvas(gc));
         MenuBar info = createMenuOfApp();
+
         var shapesMenu = createMenuOfShapes();
-        EventHandler<ActionEvent> shapeFromComboBox = new EventHandler<ActionEvent>() {
-            public void handle(ActionEvent e) {
-                String selectedShape = "Shapes." + shapesMenu.getValue().toString();
-                try {
-                    Object nameOfClass = Class.forName(selectedShape).getConstructor().newInstance();
-                    chooseShape = (PSShape) nameOfClass;
-                    sceneState = chooseShape.quantityOfCoordinates() > 2 ? sceneStates.WAITING_FOR_N_POINTS :
-                                                                                    sceneStates.WAITING_FOR_FIRST_POINT;
-                    hint.setText(sceneState == sceneStates.WAITING_FOR_N_POINTS ? helpForDrawingPolygon :
-                                                                                    helpForChoosingFirstPointText);
-                } catch (Exception ex) {
-                    System.out.print(ex.getClass().getCanonicalName());
-                };
-            }
-        };
-        shapesMenu.setOnAction(shapeFromComboBox);
+        shapesMenu.setOnAction(event -> shapeSelection(shapesMenu));
 
         FlowPane panel = new FlowPane(info, shapesMenu, clearScreen, hint);
 
@@ -142,23 +139,23 @@ public class Main extends Application {
                     break;
                 case WAITING_FOR_SECOND_POINT:
                     chooseShape.addPoints(point);
-                        list.addShape(chooseShape);
-                        chooseShape.draw(canvas.getGraphicsContext2D());
-                        sceneState = sceneStates.WAITING_FOR_FIRST_POINT;
-                        hint.setText(helpForChoosingFirstPointText);
+                    list.addShape(chooseShape);
+                    chooseShape.draw(canvas.getGraphicsContext2D());
+                    sceneState = sceneStates.WAITING_FOR_FIRST_POINT;
+                    hint.setText(helpForChoosingFirstPointText);
                     break;
                 case WAITING_FOR_N_POINTS:
                     chooseShape.addPoints(point);
-                    hint.setText(helpForDrawingPolygon);
+                    hint.setText(helpForDrawingManyAngleFigureText);
                     break;
             }
-        } else if (e.getButton() == MouseButton.SECONDARY) {
+        } else if (e.getButton() == MouseButton.SECONDARY && sceneState != sceneStates.WAITING_FOR_CHOOSING_FIGURE) {
             if (chooseShape.leftPoints() == 0) {
                 list.addShape(chooseShape);
                 chooseShape.draw(canvas.getGraphicsContext2D());
-                hint.setText(helpForDrawingPolygon);
+                hint.setText(helpForDrawingManyAngleFigureText);
             } else {
-                hint.setText("Not enough points. " + chooseShape.leftPoints() + " more :)");
+                hint.setText("    Not enough points. " + chooseShape.leftPoints() + " more :)");
             }
         }
     }
