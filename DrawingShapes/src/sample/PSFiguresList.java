@@ -1,7 +1,5 @@
 package sample;
 
-import Shapes.PSShape;
-
 import java.util.ArrayList;
 
 public class PSFiguresList {

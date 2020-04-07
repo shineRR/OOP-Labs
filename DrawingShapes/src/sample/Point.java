@@ -1,5 +1,7 @@
 package sample;
 
+import java.util.ArrayList;
+
 public class Point {
 
     public double x, y;

@@ -1,12 +1,13 @@
 package sample;
 
-import Shapes.PSShape;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.*;
+import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
+import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.FlowPane;
@@ -17,21 +18,25 @@ import javafx.stage.Stage;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.input.MouseEvent;
-
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.FileSystems;
 import java.util.ArrayList;
 
-
 public class Main extends Application {
 
+    private String helpForChoosingShapeText = "    <- Choose a figure";
     private String helpForChoosingFirstPointText = "    Click for the 1 point of your figure";
     private String helpForChoosingSecondPointText = "   Click for the 2 point of your figure";
     private String helpForDrawingPolygon = "  Click for choosing points then right button click to draw";
+    private Label hint = new Label(helpForChoosingShapeText);
+
+    PSFiguresList list = new PSFiguresList();
 
     private sceneStates sceneState = sceneStates.WAITING_FOR_CHOOSING_FIGURE;
     private PSShape choosedShape = null;
+
+    private Canvas canvas = new Canvas(640, 480);
 
     private enum sceneStates {
         WAITING_FOR_CHOOSING_FIGURE,
@@ -42,7 +47,6 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-
         initUI(primaryStage);
     }
 
@@ -61,18 +65,18 @@ public class Main extends Application {
 
     private ComboBox createMenuOfShapes() {
 
-        ArrayList<String> kek = new ArrayList<String>();
+        ArrayList<String> nameOfShapes = new ArrayList<String>();
         Path path = FileSystems.getDefault().getPath("src/Shapes").toAbsolutePath();
         String s = path.toAbsolutePath().toString();
 
         File myFolder = new File(s);
-        for (File i: myFolder.listFiles()) {
-            String string = i.getName();
-            string = string.substring(0, string.length() - 5);
-            kek.add(string);
+        for (File file: myFolder.listFiles()) {
+            String string = file.getName();
+            string = string.substring(0, string.lastIndexOf("."));
+            nameOfShapes.add(string);
         }
 
-        ComboBox cb = new ComboBox(FXCollections.observableArrayList(kek));
+        ComboBox cb = new ComboBox(FXCollections.observableArrayList(nameOfShapes));
 
         return cb;
     }
@@ -80,31 +84,30 @@ public class Main extends Application {
     private void initUI(Stage stage) {
 
         var root = new Pane();
-        PSFiguresList list = new PSFiguresList();
-        String helpForChoosingShapeText = "    <- Choose a figure";
-        Label hint = new Label(helpForChoosingShapeText);
 
         MenuBar info = createMenuOfApp();
         ComboBox shapesMenu = createMenuOfShapes();
         EventHandler<ActionEvent> shapeFromComboBox = new EventHandler<ActionEvent>() {
             public void handle(ActionEvent e) {
-                System.out.print(shapesMenu.getValue() + " selected");
+                String selectedShape = "Shapes." + shapesMenu.getValue().toString();
                 try {
-                    Object nameOfClass = Class.forName("Shapes.PSLine").getConstructor().newInstance();
+                    Object nameOfClass = Class.forName(selectedShape).getConstructor().newInstance();
                     choosedShape = (PSShape) nameOfClass;
+                    sceneState = choosedShape.quantityOfCoordinates() > 2 ? sceneStates.WAITING_FOR_N_POINTS :
+                                                                                    sceneStates.WAITING_FOR_FIRST_POINT;
+                    hint.setText(sceneState == sceneStates.WAITING_FOR_N_POINTS ? helpForDrawingPolygon :
+                                                                                    helpForChoosingFirstPointText);
                     System.out.print(choosedShape);
                 } catch (Exception exp) {
                     System.out.print(exp);
                 };
-
-                hint.setText(helpForChoosingFirstPointText);
             }
         };
         shapesMenu.setOnAction(shapeFromComboBox);
 
         FlowPane panel = new FlowPane(info, shapesMenu, hint);
 
-        var canvas = new Canvas(300, 300);
+        canvas.setOnMouseClicked(mouseEvent -> this.mouseClicked(mouseEvent));
         var gc = canvas.getGraphicsContext2D();
         gc.setFill(Color.RED);
 
@@ -115,35 +118,51 @@ public class Main extends Application {
         VBox.setLayoutX(0.0);
 
         Scene scene = new Scene(VBox, 640, 480);
-//        scene.setOnMouseClicked(getCoordinates);
-        scene.addEventHandler(MouseEvent.MOUSE_CLICKED, mouseClickHandler);
         stage.setTitle("Lines");
         stage.setScene(scene);
         stage.show();
     }
 
-    EventHandler<MouseEvent> mouseClickHandler = new EventHandler<MouseEvent>() {
-        @Override
-        public void handle(MouseEvent mouseEvent) {
-            if (mouseEvent.getButton() == MouseButton.PRIMARY) {
-                System.out.println(mouseEvent.getEventType() + "\n"
-                        + "X : Y - " + mouseEvent.getX() + " : " + mouseEvent.getY() + "\n"
-                        + "SceneX : SceneY - " + mouseEvent.getSceneX() + " : " + mouseEvent.getSceneY() + "\n"
-                        + "ScreenX : ScreenY - " + mouseEvent.getScreenX() + " : " + mouseEvent.getScreenY());
-                switch (sceneState) {
-                    case WAITING_FOR_CHOOSING_FIGURE:
-                        break;
-                    case WAITING_FOR_FIRST_POINT:
-                        break;
-                    case WAITING_FOR_SECOND_POINT:
-                        break;
-                    case WAITING_FOR_N_POINTS:
-                        break;
-                }
-            } else if (mouseEvent.getButton() == MouseButton.SECONDARY)
-                System.out.print(mouseEvent.getButton());
-        }
-    };
+    private void mouseClicked(MouseEvent e) {
+        Point point = new Point(e.getX(), e.getY());
+
+        if (e.getButton() == MouseButton.PRIMARY) {
+            System.out.println(e.getEventType() + "\n"
+                        + "X : Y - " + e.getX() + " : " + e.getY() + "\n"
+                        + "SceneX : SceneY - " + e.getSceneX() + " : " + e.getSceneY() + "\n"
+                        + "ScreenX : ScreenY - " + e.getScreenX() + " : " + e.getScreenY() + " - " + sceneState + "\n");
+            switch (sceneState) {
+                case WAITING_FOR_CHOOSING_FIGURE:
+                    break;
+                case WAITING_FOR_FIRST_POINT:
+                    choosedShape.addPoints(point);
+                    sceneState = sceneStates.WAITING_FOR_SECOND_POINT;
+                    hint.setText(helpForChoosingSecondPointText);
+                    break;
+                case WAITING_FOR_SECOND_POINT:
+                    choosedShape.addPoints(point);
+                        list.addShape(choosedShape);
+                        choosedShape.draw(canvas.getGraphicsContext2D());
+                        sceneState = sceneStates.WAITING_FOR_FIRST_POINT;
+                        hint.setText(helpForChoosingFirstPointText);
+                    break;
+                case WAITING_FOR_N_POINTS:
+//                    choosedShape.addPoints(point);
+////                    count++;
+////                    if (choosedShape.quantityOfCoordinates() ==  count) {
+////                        list.addShape(choosedShape);
+////                        choosedShape.draw(canvas.getGraphicsContext2D());
+////                        count = 0;
+////                    }
+                    break;
+            }
+        } else if (e.getButton() == MouseButton.SECONDARY)
+            System.out.print(e.getButton());
+//            if (count >=  5) {
+//                list.addShape(choosedShape);
+//                choosedShape.draw(canvas.getGraphicsContext2D());
+//            }
+    }
 
     public static void main(String[] args) {
 

@@ -1,29 +1,19 @@
 package Shapes;
 
-import Shapes.PSShape;
+import sample.PSShape;
 import javafx.scene.canvas.GraphicsContext;
 import sample.Point;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 public class PSPolygon extends PSShape {
 
+    public int quantityOfCoordinates = 5;
+    private int currentCoordinate = 0;
+    private Point[] points = new Point[quantityOfCoordinates];
+
     double[] xPoints, yPoints;
     int nPoints;
-
-    public PSPolygon() {
-//        super(0, 0, 0, 0, "Polygon");
-        this.xPoints = null;
-        this.yPoints = null;
-        this.nPoints = 0;
-    }
-
-    public PSPolygon(Point[] points) {
-        this.xPoints = getXPoints(points);
-        this.yPoints = getYPoints(points);
-        this.nPoints = points.length;
-    }
 
     private double[] getXPoints(Point[] points) {
         double[] XPoints = new double[points.length];
@@ -41,26 +31,21 @@ public class PSPolygon extends PSShape {
         return YPoints;
     }
 
-//    public String getParams() {
-//        String resultParams = name +  "(";
-//        resultParams += paramsOfArray(xPoints) + ", ";
-//        resultParams += paramsOfArray(yPoints);
-//        resultParams += ", " + nPoints + ")";
-//        return resultParams;
-//    }
-//
-//    private String paramsOfArray(double[] array) {
-//        int i = 0;
-//        String params = "{";
-//        for (double item : array) {
-//            params += (i == array.length - 1) ? (item + "}") : (item + ", ");
-//            i++;
-//        }
-//        return params;
-//    }
+    @Override
+    public int quantityOfCoordinates() {
+        return quantityOfCoordinates;
+    }
+
+    @Override
+    public void addPoints(Point point) {
+        System.out.println(currentCoordinate + " + 1");
+        points[currentCoordinate] = point;
+        currentCoordinate++;
+    }
 
     @Override
     public void draw(GraphicsContext g) {
-        g.fillPolygon(this.xPoints, this.yPoints, nPoints);
+        currentCoordinate = 0;
+        g.fillPolygon(getXPoints(points), getYPoints(points), points.length);
     }
 }

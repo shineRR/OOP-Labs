@@ -1,21 +1,34 @@
 package Shapes;
 
-import Shapes.PSShape;
-import java.awt.Point;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 
+import sample.PSShape;
+import sample.Point;
+
 public class PSLine extends PSShape {
 
-    public int quantityOfCoordinates = 1;
+    public int quantityOfCoordinates = 2;
+    private int currentCoordinate = 0;
+    private Point[] points = new Point[quantityOfCoordinates];
 
-    private Point[] point = new Point[quantityOfCoordinates];
+    @Override
+    public int quantityOfCoordinates() {
+        return quantityOfCoordinates;
+    }
+
+    @Override
+    public void addPoints(Point point) {
+        points[currentCoordinate] = point;
+        currentCoordinate++;
+    }
 
     @Override
     public void draw(GraphicsContext g) {
+        currentCoordinate = 0;
         g.setStroke(Color.RED);
         g.setLineWidth(3.0);
-        g.strokeLine(point[0].x, point[0].y, point[1].y, point[1].y);
+        g.strokeLine(points[0].x, points[0].y, points[1].x, points[1].y);
     }
 
 }
