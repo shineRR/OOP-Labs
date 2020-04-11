@@ -2,7 +2,6 @@ package Shapes;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
-
 import sample.PSShape;
 import sample.Point;
 
@@ -39,5 +38,4 @@ public class PSLine extends PSShape {
         g.setLineWidth(3.0);
         g.strokeLine(points[0].x, points[0].y, points[1].x, points[1].y);
     }
-
 }

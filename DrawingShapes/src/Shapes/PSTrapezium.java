@@ -1,11 +1,9 @@
 package Shapes;
 
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.shape.ArcType;
 import javafx.util.Pair;
 import sample.PSShape;
 import sample.Point;
-
 import java.util.ArrayList;
 
 public class PSTrapezium extends PSShape {

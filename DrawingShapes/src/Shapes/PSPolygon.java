@@ -5,7 +5,6 @@ import sample.PSShape;
 import javafx.scene.canvas.GraphicsContext;
 import sample.Point;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class PSPolygon extends PSShape {
 
