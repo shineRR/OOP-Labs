@@ -9,6 +9,7 @@ public class PSArc extends PSShape {
     double startAngle = 90, arcAngle;
 
     public int quantityOfCoordinates = 2;
+    public int minimumQuantityOfCoordinates = 2;
     private int currentCoordinate = 0;
     private Point[] points = new Point[quantityOfCoordinates];
 
@@ -22,9 +23,10 @@ public class PSArc extends PSShape {
     }
 
     @Override
-    public int quantityOfCoordinates() {
-        return quantityOfCoordinates;
-    }
+    public int quantityOfCoordinates() { return quantityOfCoordinates; }
+
+    @Override
+    public int minimumQuantityOfCoordinates() { return minimumQuantityOfCoordinates; }
 
     @Override
     public void addPoints(Point point) {

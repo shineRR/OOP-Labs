@@ -9,6 +9,7 @@ import sample.Point;
 public class PSLine extends PSShape {
 
     public int quantityOfCoordinates = 2;
+    public int minimumQuantityOfCoordinates = 2;
     private int currentCoordinate = 0;
     private Point[] points = new Point[quantityOfCoordinates];
 
@@ -21,6 +22,9 @@ public class PSLine extends PSShape {
     public int quantityOfCoordinates() {
         return quantityOfCoordinates;
     }
+
+    @Override
+    public int minimumQuantityOfCoordinates() { return minimumQuantityOfCoordinates; }
 
     @Override
     public void addPoints(Point point) {

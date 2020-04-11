@@ -30,6 +30,7 @@ public abstract class PSShape implements Serializable {
 
     public abstract int leftPoints();
     public abstract int quantityOfCoordinates();
+    public abstract int minimumQuantityOfCoordinates();
     public abstract void addPoints(Point point);
     public abstract void draw(GraphicsContext g);
 }

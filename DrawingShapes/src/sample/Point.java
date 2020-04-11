@@ -1,8 +1,9 @@
 package sample;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class Point {
+public class Point implements Serializable {
 
     public double x, y;
 

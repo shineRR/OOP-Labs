@@ -8,6 +8,7 @@ import java.lang.Math;
 public class PSOval extends PSShape {
 
     public int quantityOfCoordinates = 2;
+    public int minimumQuantityOfCoordinates = 2;
     private int currentCoordinate = 0;
     private Point[] points = new Point[quantityOfCoordinates];
 
@@ -26,6 +27,9 @@ public class PSOval extends PSShape {
     }
 
     @Override
+    public int minimumQuantityOfCoordinates() { return minimumQuantityOfCoordinates; }
+
+    @Override
     public void addPoints(Point point) {
         points[currentCoordinate] = point;
         currentCoordinate++;
@@ -35,7 +39,6 @@ public class PSOval extends PSShape {
     public void draw(GraphicsContext g) {
         currentCoordinate = 0;
         points = validateValuesForTwoCoordinates(points);
-        // x, y, width, height
         g.fillOval(points[0].x, points[0].y, Math.abs(points[1].x - points[0].x), Math.abs(points[1].y - points[0].y));
     }
 }

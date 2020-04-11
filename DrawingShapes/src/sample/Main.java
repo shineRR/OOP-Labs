@@ -14,6 +14,7 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
+
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.scene.input.MouseEvent;
@@ -22,6 +23,10 @@ import java.nio.file.Path;
 import java.nio.file.FileSystems;
 import java.util.ArrayList;
 import java.util.Objects;
+import javafx.stage.FileChooser;
+import javax.swing.JFrame;
+import java.awt.FileDialog;
+import javax.swing.JFileChooser;
 
 public class Main extends Application {
 
@@ -35,7 +40,9 @@ public class Main extends Application {
 
     private sceneStates sceneState = sceneStates.WAITING_FOR_CHOOSING_FIGURE;
     private Canvas canvas = new Canvas(640, 480);
+    private GraphicsContext graphicsContext = canvas.getGraphicsContext2D();
     private PSShape chooseShape = null;
+    private String currentClass = "";
 
     private enum sceneStates {
         WAITING_FOR_CHOOSING_FIGURE,
@@ -49,10 +56,12 @@ public class Main extends Application {
         initUI(primaryStage);
     }
 
-    private MenuBar createMenuOfApp() {
+    private MenuBar createMenuOfApp(Stage stage) {
         Menu menu = new Menu("DrawingShapes");
         var menuItem1 = new MenuItem("Open");
+        menuItem1.setOnAction(event -> openArrayList(stage));
         var menuItem2 = new MenuItem("Save");
+        menuItem2.setOnAction(event -> saveArrayList(stage));
         menu.getItems().add(menuItem1);
         menu.getItems().add(menuItem2);
         var menuBar = new MenuBar();
@@ -77,31 +86,63 @@ public class Main extends Application {
         return cb;
     }
 
-    private void clearCanvas(GraphicsContext gc) {
-        gc.clearRect(0,0 , canvas.getWidth(), canvas.getHeight());
+    private void saveArrayList(Stage stage) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Save File");
+        File file = fileChooser.showSaveDialog(stage);
+        try {
+            FileOutputStream fileStream = new FileOutputStream(file);
+            ObjectOutputStream objectStream = new ObjectOutputStream(fileStream);
+            objectStream.writeObject(list);
+        } catch (Exception exp) {
+            return;
+        };
     }
 
-    private void shapeSelection(ComboBox shapesMenu) {
-        String selectedShape = "Shapes." + shapesMenu.getValue().toString();
+    private void openArrayList(Stage stage) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Open File");
+        File file = fileChooser.showOpenDialog(stage);
         try {
-            Object nameOfClass = Class.forName(selectedShape).getConstructor().newInstance();
+            FileInputStream fileStream = new FileInputStream(file);
+            ObjectInputStream objectStream = new ObjectInputStream(fileStream);
+            var newList = (PSFiguresList) objectStream.readObject();
+            newList.printList();
+            newList.PSShapes.forEach(shape -> list.addShape(shape, graphicsContext));
+            objectStream.close();
+        } catch (Exception exp) { System.out.print(exp.getClass().getCanonicalName()); };
+    }
+
+    private void clearCanvas() {
+        graphicsContext.clearRect(0,0 , canvas.getWidth(), canvas.getHeight());
+        list.PSShapes.clear();
+    }
+
+    private void createObject() {
+        try {
+            Object nameOfClass = Class.forName(currentClass).getConstructor().newInstance();
             chooseShape = (PSShape) nameOfClass;
             sceneState = chooseShape.quantityOfCoordinates() > 2 ? sceneStates.WAITING_FOR_N_POINTS :
-                                                                            sceneStates.WAITING_FOR_FIRST_POINT;
+                    sceneStates.WAITING_FOR_FIRST_POINT;
             hint.setText(sceneState == sceneStates.WAITING_FOR_N_POINTS ? helpForDrawingManyAngleFigureText :
-                                                                                    helpForChoosingFirstPointText);
+                    helpForChoosingFirstPointText);
         } catch (Exception ex) {
             System.out.print(ex.getClass().getCanonicalName());
         };
     }
 
+    private void shapeSelection(ComboBox shapesMenu) {
+        String selectedShape = "Shapes." + shapesMenu.getValue().toString();
+        currentClass = selectedShape;
+        createObject();
+    }
+
     private void initUI(Stage stage) {
         var root = new Pane();
-        GraphicsContext gc = canvas.getGraphicsContext2D();
-        gc.setFill(Color.RED);
+        graphicsContext.setFill(Color.RED);
         Button clearScreen = new Button("Clear");
-        clearScreen.setOnAction(event -> clearCanvas(gc));
-        MenuBar info = createMenuOfApp();
+        clearScreen.setOnAction(event -> clearCanvas());
+        MenuBar info = createMenuOfApp(stage);
 
         var shapesMenu = createMenuOfShapes();
         shapesMenu.setOnAction(event -> shapeSelection(shapesMenu));
@@ -139,21 +180,23 @@ public class Main extends Application {
                     break;
                 case WAITING_FOR_SECOND_POINT:
                     chooseShape.addPoints(point);
-                    list.addShape(chooseShape);
-                    chooseShape.draw(canvas.getGraphicsContext2D());
-                    sceneState = sceneStates.WAITING_FOR_FIRST_POINT;
-                    hint.setText(helpForChoosingFirstPointText);
+                    list.addShape(chooseShape, graphicsContext);
+                    createObject();
                     break;
                 case WAITING_FOR_N_POINTS:
                     chooseShape.addPoints(point);
                     hint.setText(helpForDrawingManyAngleFigureText);
+                    if (chooseShape.leftPoints() == 0 &&
+                                chooseShape.quantityOfCoordinates() == chooseShape.minimumQuantityOfCoordinates()) {
+                        list.addShape(chooseShape, graphicsContext);
+                        createObject();
+                    }
                     break;
             }
         } else if (e.getButton() == MouseButton.SECONDARY && sceneState != sceneStates.WAITING_FOR_CHOOSING_FIGURE) {
             if (chooseShape.leftPoints() == 0) {
-                list.addShape(chooseShape);
-                chooseShape.draw(canvas.getGraphicsContext2D());
-                hint.setText(helpForDrawingManyAngleFigureText);
+                list.addShape(chooseShape, graphicsContext);
+                createObject();
             } else {
                 hint.setText("    Not enough points. " + chooseShape.leftPoints() + " more :)");
             }

@@ -1,15 +1,19 @@
 package sample;
 
+import javafx.scene.canvas.GraphicsContext;
+
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class PSFiguresList {
+public class PSFiguresList implements Serializable {
 
     public ArrayList<PSShape> PSShapes = new ArrayList<PSShape>();
     public PSShape nowShapes = null;
     int getSize = 0;
 
-    public void addShape(PSShape newShapes) {
+    public void addShape(PSShape newShapes, GraphicsContext gc) {
         PSShapes.add(newShapes);
+        newShapes.draw(gc);
         nowShapes = newShapes;
         ++getSize;
     }
