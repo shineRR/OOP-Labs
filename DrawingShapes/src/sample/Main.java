@@ -24,9 +24,6 @@ import java.nio.file.FileSystems;
 import java.util.ArrayList;
 import java.util.Objects;
 import javafx.stage.FileChooser;
-import javax.swing.JFrame;
-import java.awt.FileDialog;
-import javax.swing.JFileChooser;
 
 public class Main extends Application {
 
@@ -78,8 +75,11 @@ public class Main extends Application {
         for (File file: Objects.requireNonNull(myFolder.listFiles())) {
             String string = file.getName();
             string = string.substring(0, string.lastIndexOf("."));
-            nameOfShapes.add(string);
+            if (string.length() > 0) {
+                nameOfShapes.add(string);
+            }
         }
+        System.out.println(nameOfShapes);
 
         ComboBox cb = new ComboBox(FXCollections.observableArrayList(nameOfShapes));
 

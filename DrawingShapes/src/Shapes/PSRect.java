@@ -1,7 +1,5 @@
 package Shapes;
 
-import javafx.scene.effect.DropShadow;
-import javafx.scene.paint.Color;
 import sample.PSShape;
 import javafx.scene.canvas.GraphicsContext;
 import sample.Point;

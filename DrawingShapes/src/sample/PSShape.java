@@ -1,11 +1,6 @@
 package sample;
 
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.shape.Polygon;
-import javafx.scene.shape.Shape;
-import sample.Point;
-
-import java.awt.*;
 import java.io.Serializable;
 
 public abstract class PSShape implements Serializable {

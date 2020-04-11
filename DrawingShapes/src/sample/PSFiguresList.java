@@ -1,7 +1,6 @@
 package sample;
 
 import javafx.scene.canvas.GraphicsContext;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 
@@ -13,7 +12,9 @@ public class PSFiguresList implements Serializable {
 
     public void addShape(PSShape newShapes, GraphicsContext gc) {
         PSShapes.add(newShapes);
-        newShapes.draw(gc);
+        try {
+            newShapes.draw(gc);
+        } catch (Exception e) { return; }
         nowShapes = newShapes;
         ++getSize;
     }
