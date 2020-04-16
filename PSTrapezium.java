@@ -1,4 +1,4 @@
-package Shapes;
+package Plugins;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.util.Pair;
@@ -29,10 +29,28 @@ public class PSTrapezium extends PSShape {
                 new Pair<>("yPoints", YPOINTS) };
     }
 
-    @Override
-    public int leftPoints() {
-        return quantityOfCoordinates - currentCoordinate;
+    private void calculatePoints() {
+        double x1 = xPoints[0];
+        double x2 = xPoints[1];
+        double x3 = xPoints[2];
+        double x4 = xPoints[3];
+        double y1 = yPoints[0];
+        double y2 = yPoints[1];
+        double y3 = yPoints[2];
+        double y4 = yPoints[3];
+
+        double lenAD = Math.sqrt(Math.pow(y2 - y1, 2) + Math.pow(x2 - x1, 2));
+        double lenBC = Math.sqrt(Math.pow(y4 - y3, 2) + Math.pow(x4 - x3, 2));
+        double coef = lenAD / lenBC;
+        Point vectorBC = new Point();
+        vectorBC.x = coef * (x3 - x2);
+        vectorBC.y = coef * (y3 - y2);
+        xPoints[3] = vectorBC.x + x1;
+        yPoints[3] = vectorBC.y + y1;
     }
+
+    @Override
+    public int leftPoints() { return quantityOfCoordinates - currentCoordinate; }
 
     @Override
     public int quantityOfCoordinates() { return quantityOfCoordinates; }
@@ -48,10 +66,11 @@ public class PSTrapezium extends PSShape {
 
     @Override
     public void draw(GraphicsContext g) {
-        currentCoordinate = 0;
         var pairOfXYArrays = getPoints();
         xPoints = (double[]) pairOfXYArrays[0].getValue();
         yPoints = (double[]) pairOfXYArrays[1].getValue();
+        calculatePoints();
+        currentCoordinate = 0;
         g.fillPolygon(xPoints, yPoints, quantityOfCoordinates);
     }
 }

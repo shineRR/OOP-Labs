@@ -2,6 +2,7 @@ package sample;
 
 import javafx.application.Application;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -18,10 +19,10 @@ import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.scene.input.MouseEvent;
 import java.io.*;
+import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.FileSystems;
-import java.util.ArrayList;
-import java.util.Objects;
+import java.util.*;
 import javafx.stage.FileChooser;
 
 public class Main extends Application {
@@ -49,40 +50,8 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+
         initUI(primaryStage);
-    }
-
-    private MenuBar createMenuOfApp(Stage stage) {
-        Menu menu = new Menu("DrawingShapes");
-        var menuItem1 = new MenuItem("Open");
-        menuItem1.setOnAction(event -> openArrayList(stage));
-        var menuItem2 = new MenuItem("Save");
-        menuItem2.setOnAction(event -> saveArrayList(stage));
-        menu.getItems().add(menuItem1);
-        menu.getItems().add(menuItem2);
-        var menuBar = new MenuBar();
-        menuBar.getMenus().add(menu);
-        return menuBar;
-    }
-
-    private ComboBox createMenuOfShapes() {
-        ArrayList<String> nameOfShapes = new ArrayList<String>();
-        Path path = FileSystems.getDefault().getPath("src/Shapes").toAbsolutePath();
-        String s = path.toAbsolutePath().toString();
-
-        File myFolder = new File(s);
-        for (File file: Objects.requireNonNull(myFolder.listFiles())) {
-            String string = file.getName();
-            string = string.substring(0, string.lastIndexOf("."));
-            if (string.length() > 0) {
-                nameOfShapes.add(string);
-            }
-        }
-        System.out.println(nameOfShapes);
-
-        ComboBox cb = new ComboBox(FXCollections.observableArrayList(nameOfShapes));
-
-        return cb;
     }
 
     private void saveArrayList(Stage stage) {
@@ -119,8 +88,10 @@ public class Main extends Application {
 
     private void createObject() {
         try {
+            System.out.println(currentClass);
             Object nameOfClass = Class.forName(currentClass).getConstructor().newInstance();
             chooseShape = (PSShape) nameOfClass;
+            System.out.println(chooseShape);
             sceneState = chooseShape.quantityOfCoordinates() > 2 ? sceneStates.WAITING_FOR_N_POINTS :
                     sceneStates.WAITING_FOR_FIRST_POINT;
             hint.setText(sceneState == sceneStates.WAITING_FOR_N_POINTS ? helpForDrawingManyAngleFigureText :
@@ -130,22 +101,85 @@ public class Main extends Application {
         };
     }
 
+    private MenuBar createMenuOfApp(Stage stage,  ComboBox<String> shapesMenus) {
+        Menu menu = new Menu("DrawingShapes");
+
+        var menuItem1 = new MenuItem("Open");
+        menuItem1.setOnAction(event -> openArrayList(stage));
+        var menuItem2 = new MenuItem("Save");
+        menuItem2.setOnAction(event -> saveArrayList(stage));
+        var menuItem3 = new MenuItem("Import plugins");
+        menuItem3.setOnAction(event -> { importPlugins(shapesMenus); });
+
+        menu.getItems().add(menuItem1);
+        menu.getItems().add(menuItem2);
+        menu.getItems().add(menuItem3);
+
+        var menuBar = new MenuBar();
+        menuBar.getMenus().add(menu);
+        return menuBar;
+    }
+
+    private void importPlugins(ComboBox<String> menu) {
+        menu.setItems(null);
+        ObservableList<String> newListOfShapes = updateShapesMenu("out/production/DrawingShapes/Plugins");
+        newListOfShapes.addAll(updateShapesMenu("out/production/DrawingShapes/Shapes"));
+        chooseShape = null;
+        currentClass = "";
+        sceneState = sceneStates.WAITING_FOR_CHOOSING_FIGURE;
+        hint.setText(helpForChoosingShapeText);
+        menu.setItems(newListOfShapes);
+    }
+
+    private ComboBox<String> createMenuOfShapes() {
+        ObservableList<String> nameOfShapes = updateShapesMenu("out/production/DrawingShapes/Shapes");
+        ComboBox<String > cb = new ComboBox<String>(FXCollections.observableArrayList(nameOfShapes));
+        return cb;
+    }
+
     private void shapeSelection(ComboBox shapesMenu) {
-        String selectedShape = "Shapes." + shapesMenu.getValue().toString();
-        currentClass = selectedShape;
-        createObject();
+        try {
+            var list = updateShapesMenu("out/production/DrawingShapes/Shapes");
+            currentClass = shapesMenu.getValue().toString();
+            currentClass = list.contains(currentClass) ? "Shapes." + currentClass : "Plugins." + currentClass;
+            createObject();
+        } catch (Exception e){
+            System.out.println(e.getClass().getCanonicalName());
+        }
+    }
+
+    private ObservableList<String> updateShapesMenu(String pathToFolder) {
+        ArrayList<String> nameOfShapes = new ArrayList<String>();
+        try {
+
+            Path path = FileSystems.getDefault().getPath(pathToFolder).toAbsolutePath();
+            String s = path.toAbsolutePath().toString();
+
+            File myFolder = new File(s);
+            for (File file : Objects.requireNonNull(myFolder.listFiles())) {
+                String string = file.getName();
+                string = string.substring(0, string.lastIndexOf("."));
+                if (string.length() > 0) {
+                    nameOfShapes.add(string);
+                }
+            }
+        } catch (Exception e) {
+            System.out.println(e.getClass().getCanonicalName());
+        }
+
+        return FXCollections.observableArrayList(nameOfShapes);
     }
 
     private void initUI(Stage stage) {
         var root = new Pane();
         graphicsContext.setFill(Color.RED);
+
         Button clearScreen = new Button("Clear");
         clearScreen.setOnAction(event -> clearCanvas());
-        MenuBar info = createMenuOfApp(stage);
 
-        var shapesMenu = createMenuOfShapes();
+        ComboBox<String> shapesMenu = createMenuOfShapes();
         shapesMenu.setOnAction(event -> shapeSelection(shapesMenu));
-
+        MenuBar info = createMenuOfApp(stage, shapesMenu);
         FlowPane panel = new FlowPane(info, shapesMenu, clearScreen, hint);
 
         canvas.setOnMouseClicked(this::mouseClicked);
