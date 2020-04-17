@@ -19,11 +19,9 @@ import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.scene.input.MouseEvent;
 import java.io.*;
-import java.net.URL;
-import java.nio.file.Path;
-import java.nio.file.FileSystems;
 import java.util.*;
 import javafx.stage.FileChooser;
+import java.net.URL;
 
 public class Main extends Application {
 
@@ -122,24 +120,37 @@ public class Main extends Application {
 
     private void importPlugins(ComboBox<String> menu) {
         menu.setItems(null);
-        ObservableList<String> newListOfShapes = updateShapesMenu("out/production/DrawingShapes/Plugins");
-        newListOfShapes.addAll(updateShapesMenu("out/production/DrawingShapes/Shapes"));
+        ArrayList<String> newListOfShapes = new ArrayList<String>();
+        try {
+            newListOfShapes.addAll(getStringArray(getClassesArray("Shapes")));
+            newListOfShapes.addAll(getStringArray(getClassesArray("Plugins")));
+        } catch (Exception e) {
+            menu.setItems(FXCollections.observableArrayList(newListOfShapes));
+            e.printStackTrace();
+        }
         chooseShape = null;
         currentClass = "";
         sceneState = sceneStates.WAITING_FOR_CHOOSING_FIGURE;
         hint.setText(helpForChoosingShapeText);
-        menu.setItems(newListOfShapes);
+        menu.setItems(FXCollections.observableArrayList(newListOfShapes));
     }
 
     private ComboBox<String> createMenuOfShapes() {
-        ObservableList<String> nameOfShapes = updateShapesMenu("out/production/DrawingShapes/Shapes");
-        ComboBox<String > cb = new ComboBox<String>(FXCollections.observableArrayList(nameOfShapes));
+        ArrayList<String> classes= new ArrayList<String>();
+        try {
+            Class<?>[] nameOfShapes = getClassesArray("Shapes");
+            classes = getStringArray(nameOfShapes);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        ComboBox<String > cb = new ComboBox<String>(FXCollections.observableArrayList(classes));
         return cb;
     }
 
     private void shapeSelection(ComboBox shapesMenu) {
         try {
-            var list = updateShapesMenu("out/production/DrawingShapes/Shapes");
+            var list = getStringArray(getClassesArray("Shapes"));
             currentClass = shapesMenu.getValue().toString();
             currentClass = list.contains(currentClass) ? "Shapes." + currentClass : "Plugins." + currentClass;
             createObject();
@@ -148,26 +159,44 @@ public class Main extends Application {
         }
     }
 
-    private ObservableList<String> updateShapesMenu(String pathToFolder) {
-        ArrayList<String> nameOfShapes = new ArrayList<String>();
-        try {
+    private ArrayList<String> getStringArray(Class<?>[] array) {
+        ArrayList<String> stringArray = new ArrayList<String>();
+        for (Class<?> cl: array) {
+            String nameClass = cl.toString();
+            nameClass = nameClass.substring(nameClass.lastIndexOf(".") + 1, nameClass.length());
+            stringArray.add(nameClass);
+        }
+        return stringArray;
+    }
 
-            Path path = FileSystems.getDefault().getPath(pathToFolder).toAbsolutePath();
-            String s = path.toAbsolutePath().toString();
-
-            File myFolder = new File(s);
-            for (File file : Objects.requireNonNull(myFolder.listFiles())) {
-                String string = file.getName();
-                string = string.substring(0, string.lastIndexOf("."));
-                if (string.length() > 0) {
-                    nameOfShapes.add(string);
-                }
+    public static Class<?>[] getClassesArray(String packageName) throws IOException {
+        ArrayList<Class<?>> list = new ArrayList<Class<?>>(0);
+        for(File f : getPackageContent(packageName)) {
+            String name = f.getName();
+            System.out.println(name);
+            if (name.endsWith(".class")) {
+                name = name.substring(0, name.length() - 6);
             }
-        } catch (Exception e) {
-            System.out.println(e.getClass().getCanonicalName());
+            try {
+                Class<?> cls = Class.forName(packageName + '.' + name);
+                list.add(cls);
+            } catch (NoClassDefFoundError | ClassNotFoundException e) {
+                System.out.println(e.getClass().getCanonicalName());
+            }
         }
 
-        return FXCollections.observableArrayList(nameOfShapes);
+        return list.toArray(new Class<?>[]{});
+    }
+
+    private static File[] getPackageContent(String packageName) throws IOException {
+        ArrayList<File> list = new ArrayList<File>(0);
+        Enumeration<URL> urls = Thread.currentThread().getContextClassLoader().getResources(packageName);
+        while (urls.hasMoreElements()) {
+            URL url = urls.nextElement();
+            File dir = new File(url.getFile());
+            Collections.addAll(list, Objects.requireNonNull(dir.listFiles()));
+        }
+        return list.toArray(new File[]{});
     }
 
     private void initUI(Stage stage) {
